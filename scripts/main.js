@@ -1,11 +1,10 @@
 const elemGraficoDolar = document.getElementById("graficoDolar");
 
-const enderecoApi = "https://economia.awesomeapi.com.br/USD-BRL/100";
+const enderecoApi = "https://economia.awesomeapi.com.br/last/USD-BRL";
 
 class Cotacoes {
-  bidArray = [];
-  askArray = [];
-  labels = [];
+  bid = 0;
+  ask = 0;
   nomeMoedas = "";
 
   async carregarCotacoes() {
@@ -14,46 +13,26 @@ class Cotacoes {
       const dados = await respostaApi.json();
 
       console.log(dados);
+      this.bid = dados.USDBRL.bid;
+      this.ask = dados.USDBRL.ask;
 
-      const bidArray = dados.map((dado) => {
-        return dado.bid;
-      });
-      const askArray = dados.map((dado) => {
-        return dado.ask;
-      });
-
-      const nomeMoedas = dados[0].name;
-
-      this.salvarCotacoes(bidArray, askArray);
+      const nomeMoedas = dados.USDBRL.name;
       this.salvarNomeMoedas(nomeMoedas);
     } catch (error) {
       console.error("ERRO:", error);
     }
   }
 
-  salvarCotacoes(bidArray, askArray) {
-    this.bidArray = bidArray;
-    this.askArray = askArray;
+  getBid() {
+    return this.bid;
+  }
+
+  getAsk() {
+    return this.ask;
   }
 
   salvarNomeMoedas(nomeMoedas) {
     this.nomeMoedas = nomeMoedas;
-  }
-
-  getBidArray() {
-    return this.bidArray;
-  }
-
-  getAskArray() {
-    return this.askArray;
-  }
-
-  gerarLabels() {
-    for (let i = 0; i < this.bidArray.length; i++) {
-      this.labels.push(this.bidArray.length - i);
-    }
-
-    return this.labels;
   }
 }
 
@@ -62,41 +41,62 @@ await cotacoes.carregarCotacoes();
 
 const nomeMoedas = cotacoes.nomeMoedas;
 const tituloGrafico = document.getElementById("texto-grafico-titulo");
-
 tituloGrafico.textContent = `Variação de ${nomeMoedas} desde o login`;
-
-const labels = cotacoes.gerarLabels();
 
 const graficoDolar = new Chart(elemGraficoDolar, {
   type: "line",
   data: {
-    labels: labels,
+    labels: [],
     datasets: [
       {
         label: "Bid",
-        data: cotacoes.getBidArray(),
+        data: [],
         borderWidth: 1,
       },
       {
         label: "Ask",
-        data: cotacoes.getAskArray(),
+        data: [],
         borderWidth: 1,
       },
     ],
   },
 });
 
-function atualizarGrafico(chart) {
-  chart.data.datasets[0].data.length = 0;
-  chart.data.datasets[1].data.length = 0;
+async function atualizarGrafico(chart, label) {
+  await cotacoes.carregarCotacoes();
 
-  chart.data.datasets[0].data.push(...cotacoes.getBidArray());
-  chart.data.datasets[1].data.push(...cotacoes.getAskArray());
+  const agora = Temporal.Now.plainTimeISO();
+
+  const formatter = new Intl.NumberFormat("pt-BR", { minimumIntegerDigits: 2 });
+
+  const hora = formatter.format(agora.hour);
+  const minuto = formatter.format(agora.minute);
+  const segundo = formatter.format(agora.second);
+
+  const agoraFormatado = `${hora}:${minuto}:${segundo}`;
+  chart.data.labels.push(agoraFormatado);
+
+  chart.data.datasets[0].data.push(cotacoes.getBid());
+  chart.data.datasets[1].data.push(cotacoes.getAsk());
   chart.update();
 }
 
-setInterval(async () => {
-  await cotacoes.carregarCotacoes();
+const intervalo = 3000;
 
+function inicializarGrafico(chart, interval) {
+  // adiciona dois dados iniciais
   atualizarGrafico(graficoDolar);
-}, 120000);
+  atualizarGrafico(graficoDolar);
+
+  setTimeout(() => {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.shift();
+  }, interval);
+
+  setInterval(async () => {
+    await atualizarGrafico(graficoDolar);
+  }, interval);
+}
+
+inicializarGrafico(graficoDolar, intervalo);
