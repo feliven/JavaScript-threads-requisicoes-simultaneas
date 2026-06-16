@@ -1,4 +1,4 @@
-const graficoDolar = document.getElementById("graficoDolar");
+const elemGraficoDolar = document.getElementById("graficoDolar");
 
 const enderecoApi = "https://economia.awesomeapi.com.br/USD-BRL/100";
 
@@ -40,6 +40,14 @@ class Cotacoes {
     this.nomeMoedas = nomeMoedas;
   }
 
+  getBidArray() {
+    return this.bidArray;
+  }
+
+  getAskArray() {
+    return this.askArray;
+  }
+
   gerarLabels() {
     for (let i = 0; i < this.bidArray.length; i++) {
       this.labels.push(this.bidArray.length - i);
@@ -51,8 +59,6 @@ class Cotacoes {
 
 const cotacoes = new Cotacoes();
 await cotacoes.carregarCotacoes();
-const bids = cotacoes.bidArray;
-const asks = cotacoes.askArray;
 
 const nomeMoedas = cotacoes.nomeMoedas;
 const tituloGrafico = document.getElementById("texto-grafico-titulo");
@@ -61,21 +67,36 @@ tituloGrafico.textContent = `Variação de ${nomeMoedas} desde o login`;
 
 const labels = cotacoes.gerarLabels();
 
-new Chart(graficoDolar, {
+const graficoDolar = new Chart(elemGraficoDolar, {
   type: "line",
   data: {
     labels: labels,
     datasets: [
       {
         label: "Bid",
-        data: bids,
+        data: cotacoes.getBidArray(),
         borderWidth: 1,
       },
       {
         label: "Ask",
-        data: asks,
+        data: cotacoes.getAskArray(),
         borderWidth: 1,
       },
     ],
   },
 });
+
+function atualizarGrafico(chart) {
+  chart.data.datasets[0].data.length = 0;
+  chart.data.datasets[1].data.length = 0;
+
+  chart.data.datasets[0].data.push(...cotacoes.getBidArray());
+  chart.data.datasets[1].data.push(...cotacoes.getAskArray());
+  chart.update();
+}
+
+setInterval(async () => {
+  await cotacoes.carregarCotacoes();
+
+  atualizarGrafico(graficoDolar);
+}, 120000);
