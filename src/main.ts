@@ -1,4 +1,5 @@
 import type { Chart } from "./charttype.js";
+import { exibeCotacao } from "./exibeCotacao.js";
 
 const elemGraficoDolar = document.getElementById("graficoDolar") as HTMLCanvasElement;
 
@@ -9,13 +10,13 @@ interface DadosApi {
     code: string;
     codein: string;
     name: string;
-    high: number;
-    low: number;
-    varBid: number;
-    pctChange: number;
-    bid: number;
-    ask: number;
-    timestamp: number;
+    high: string;
+    low: string;
+    varBid: string;
+    pctChange: string;
+    bid: string;
+    ask: string;
+    timestamp: string;
     create_date: string;
   };
 }
@@ -31,8 +32,10 @@ class Cotacoes {
       const dados = (await respostaApi.json()) as DadosApi;
 
       console.log(dados);
-      this.bid = dados.USDBRL.bid;
-      this.ask = dados.USDBRL.ask;
+
+      // Convertemos para número no momento da atribuição
+      this.bid = Number(dados.USDBRL.bid);
+      this.ask = Number(dados.USDBRL.ask);
 
       const nomeMoedas = dados.USDBRL.name;
       this.salvarNomeMoedas(nomeMoedas);
@@ -118,4 +121,15 @@ function inicializarGrafico(chart: Chart, interval: number) {
   }, interval);
 }
 
+function inicializarTabela(interval: number) {
+  const cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+
+  exibeCotacao("dólar", "dólares", cotacaoMedia);
+
+  setInterval(async () => {
+    exibeCotacao("dólar", "dólares", cotacaoMedia);
+  }, interval);
+}
+
 inicializarGrafico(graficoDolar, intervalo);
+inicializarTabela(intervalo);

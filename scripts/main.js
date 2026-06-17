@@ -1,3 +1,4 @@
+import { exibeCotacao } from "./exibeCotacao.js";
 const elemGraficoDolar = document.getElementById("graficoDolar");
 const enderecoApi = "https://economia.awesomeapi.com.br/last/USD-BRL";
 class Cotacoes {
@@ -9,8 +10,9 @@ class Cotacoes {
             const respostaApi = await fetch(enderecoApi);
             const dados = (await respostaApi.json());
             console.log(dados);
-            this.bid = dados.USDBRL.bid;
-            this.ask = dados.USDBRL.ask;
+            // Convertemos para número no momento da atribuição
+            this.bid = Number(dados.USDBRL.bid);
+            this.ask = Number(dados.USDBRL.ask);
             const nomeMoedas = dados.USDBRL.name;
             this.salvarNomeMoedas(nomeMoedas);
         }
@@ -79,5 +81,12 @@ function inicializarGrafico(chart, interval) {
         await atualizarGrafico(graficoDolar);
     }, interval);
 }
+function inicializarTabela(interval) {
+    const cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+    exibeCotacao("dólar", "dólares", cotacaoMedia);
+    setInterval(async () => {
+        exibeCotacao("dólar", "dólares", cotacaoMedia);
+    }, interval);
+}
 inicializarGrafico(graficoDolar, intervalo);
-export {};
+inicializarTabela(intervalo);
