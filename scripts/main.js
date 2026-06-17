@@ -54,39 +54,60 @@ const graficoDolar = new Chart(elemGraficoDolar, {
         ],
     },
 });
-async function atualizarGrafico(chart) {
-    await cotacoes.carregarCotacoes();
+function horarioFormatado() {
     const agora = Temporal.Now.plainTimeISO();
     const formatter = new Intl.NumberFormat("pt-BR", { minimumIntegerDigits: 2 });
     const hora = formatter.format(agora.hour);
     const minuto = formatter.format(agora.minute);
     const segundo = formatter.format(agora.second);
-    const agoraFormatado = `${hora}:${minuto}:${segundo}`;
-    chart.data.labels?.push(agoraFormatado);
-    chart.data.datasets[0]?.data.push(cotacoes.getBid());
-    chart.data.datasets[1]?.data.push(cotacoes.getAsk());
+    return `${hora}:${minuto}:${segundo}`;
+}
+// async function atualizarGrafico(chart: Chart) {
+//   await cotacoes.carregarCotacoes();
+//   const agoraFormatado = horarioFormatado();
+//   chart.data.labels?.push(agoraFormatado);
+//   chart.data.datasets[0]?.data.push(cotacoes.getBid());
+//   chart.data.datasets[1]?.data.push(cotacoes.getAsk());
+//   chart.update();
+// }
+// const intervalo = 3000;
+// function inicializarGrafico(chart: Chart, interval: number) {
+//   // adiciona dois dados iniciais
+//   atualizarGrafico(graficoDolar);
+//   atualizarGrafico(graficoDolar);
+//   setTimeout(() => {
+//     chart.data.labels?.shift();
+//     chart.data.datasets[0]?.data.shift();
+//     chart.data.datasets[1]?.data.shift();
+//   }, interval);
+//   setInterval(async () => {
+//     await atualizarGrafico(graficoDolar);
+//   }, interval);
+// }
+// function inicializarTabela(interval: number) {
+//   let cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+//   exibeCotacao("dólar", "dólares", cotacaoMedia);
+//   setInterval(async () => {
+//     cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+//     exibeCotacao("dólar", "dólares", cotacaoMedia);
+//   }, interval);
+// }
+// inicializarGrafico(graficoDolar, intervalo);
+// inicializarTabela(intervalo);
+function atualizarGraficoWorker(chart, hora, valorBid, valorAsk) {
+    chart.data.labels?.push(hora);
+    chart.data.datasets[0]?.data.push(valorBid);
+    chart.data.datasets[1]?.data.push(valorAsk);
     chart.update();
 }
-const intervalo = 3000;
-function inicializarGrafico(chart, interval) {
-    // adiciona dois dados iniciais
-    atualizarGrafico(graficoDolar);
-    atualizarGrafico(graficoDolar);
-    setTimeout(() => {
-        chart.data.labels?.shift();
-        chart.data.datasets[0]?.data.shift();
-        chart.data.datasets[1]?.data.shift();
-    }, interval);
-    setInterval(async () => {
-        await atualizarGrafico(graficoDolar);
-    }, interval);
-}
-function inicializarTabela(interval) {
-    const cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+let workerDolar = new Worker("./scripts/workers/workerDolar.js", { type: "module" });
+workerDolar.addEventListener("message", (event) => {
+    const dados = event.data;
+    const bid = Number(dados.bid);
+    const ask = Number(dados.ask);
+    let cotacaoMedia = (bid + ask) / 2;
+    let horario = horarioFormatado();
     exibeCotacao("dólar", "dólares", cotacaoMedia);
-    setInterval(async () => {
-        exibeCotacao("dólar", "dólares", cotacaoMedia);
-    }, interval);
-}
-inicializarGrafico(graficoDolar, intervalo);
-inicializarTabela(intervalo);
+    atualizarGraficoWorker(graficoDolar, horario, bid, ask);
+});
+workerDolar.postMessage("usd");

@@ -1,25 +1,10 @@
 import type { Chart } from "./charttype.js";
+import type { DadosApi } from "./DadosApi.js";
 import { exibeCotacao } from "./exibeCotacao.js";
 
 const elemGraficoDolar = document.getElementById("graficoDolar") as HTMLCanvasElement;
 
 const enderecoApi = "https://economia.awesomeapi.com.br/last/USD-BRL";
-
-interface DadosApi {
-  USDBRL: {
-    code: string;
-    codein: string;
-    name: string;
-    high: string;
-    low: string;
-    varBid: string;
-    pctChange: string;
-    bid: string;
-    ask: string;
-    timestamp: string;
-    create_date: string;
-  };
-}
 
 class Cotacoes {
   bid = 0;
@@ -84,9 +69,7 @@ const graficoDolar = new Chart(elemGraficoDolar, {
   },
 });
 
-async function atualizarGrafico(chart: Chart) {
-  await cotacoes.carregarCotacoes();
-
+function horarioFormatado(): string {
   const agora = Temporal.Now.plainTimeISO();
 
   const formatter = new Intl.NumberFormat("pt-BR", { minimumIntegerDigits: 2 });
@@ -95,41 +78,72 @@ async function atualizarGrafico(chart: Chart) {
   const minuto = formatter.format(agora.minute);
   const segundo = formatter.format(agora.second);
 
-  const agoraFormatado = `${hora}:${minuto}:${segundo}`;
-  chart.data.labels?.push(agoraFormatado);
+  return `${hora}:${minuto}:${segundo}`;
+}
 
-  chart.data.datasets[0]?.data.push(cotacoes.getBid());
-  chart.data.datasets[1]?.data.push(cotacoes.getAsk());
+// async function atualizarGrafico(chart: Chart) {
+//   await cotacoes.carregarCotacoes();
+
+//   const agoraFormatado = horarioFormatado();
+
+//   chart.data.labels?.push(agoraFormatado);
+
+//   chart.data.datasets[0]?.data.push(cotacoes.getBid());
+//   chart.data.datasets[1]?.data.push(cotacoes.getAsk());
+//   chart.update();
+// }
+
+// const intervalo = 3000;
+
+// function inicializarGrafico(chart: Chart, interval: number) {
+//   // adiciona dois dados iniciais
+//   atualizarGrafico(graficoDolar);
+//   atualizarGrafico(graficoDolar);
+
+//   setTimeout(() => {
+//     chart.data.labels?.shift();
+//     chart.data.datasets[0]?.data.shift();
+//     chart.data.datasets[1]?.data.shift();
+//   }, interval);
+
+//   setInterval(async () => {
+//     await atualizarGrafico(graficoDolar);
+//   }, interval);
+// }
+
+// function inicializarTabela(interval: number) {
+//   let cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+//   exibeCotacao("dólar", "dólares", cotacaoMedia);
+
+//   setInterval(async () => {
+//     cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+//     exibeCotacao("dólar", "dólares", cotacaoMedia);
+//   }, interval);
+// }
+
+// inicializarGrafico(graficoDolar, intervalo);
+// inicializarTabela(intervalo);
+
+function atualizarGraficoWorker(chart: Chart, hora: string, valorBid: number, valorAsk: number) {
+  chart.data.labels?.push(hora);
+
+  chart.data.datasets[0]?.data.push(valorBid);
+  chart.data.datasets[1]?.data.push(valorAsk);
   chart.update();
 }
 
-const intervalo = 3000;
+let workerDolar = new Worker("./scripts/workers/workerDolar.js", { type: "module" });
 
-function inicializarGrafico(chart: Chart, interval: number) {
-  // adiciona dois dados iniciais
-  atualizarGrafico(graficoDolar);
-  atualizarGrafico(graficoDolar);
-
-  setTimeout(() => {
-    chart.data.labels?.shift();
-    chart.data.datasets[0]?.data.shift();
-    chart.data.datasets[1]?.data.shift();
-  }, interval);
-
-  setInterval(async () => {
-    await atualizarGrafico(graficoDolar);
-  }, interval);
-}
-
-function inicializarTabela(interval: number) {
-  const cotacaoMedia = (cotacoes.getBid() + cotacoes.getAsk()) / 2;
+workerDolar.addEventListener("message", (event) => {
+  const dados = event.data as DadosApi["USDBRL"];
+  const bid = Number(dados.bid);
+  const ask = Number(dados.ask);
+  let cotacaoMedia = (bid + ask) / 2;
+  let horario = horarioFormatado();
 
   exibeCotacao("dólar", "dólares", cotacaoMedia);
 
-  setInterval(async () => {
-    exibeCotacao("dólar", "dólares", cotacaoMedia);
-  }, interval);
-}
+  atualizarGraficoWorker(graficoDolar, horario, bid, ask);
+});
 
-inicializarGrafico(graficoDolar, intervalo);
-inicializarTabela(intervalo);
+workerDolar.postMessage("usd");
