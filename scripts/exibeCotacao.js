@@ -1,5 +1,4 @@
-const lista = document.getElementById("dolar");
-export function exibeCotacao(nomeSingular, nomePlural, valor) {
+export function exibeCotacao(lista, nomeSingular, nomePlural, valor) {
     lista.textContent = "";
     for (let multiplicador = 1; multiplicador <= 1000; multiplicador *= 10) {
         const itemLista = document.createElement("li");

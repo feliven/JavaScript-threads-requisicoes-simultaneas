@@ -1,10 +1,10 @@
-import { enderecoApiUsd } from "../shared/vars.js";
+import { enderecoApiIene } from "../shared/vars.js";
 const intervalo = 3000;
 async function carregarCotacoes() {
     try {
-        const respostaApi = await fetch(enderecoApiUsd);
+        const respostaApi = await fetch(enderecoApiIene);
         const dados = (await respostaApi.json());
-        postMessage(dados["USDBRL"]);
+        postMessage(dados["BRLJPY"]);
     }
     catch (error) {
         console.error("ERRO:", error);

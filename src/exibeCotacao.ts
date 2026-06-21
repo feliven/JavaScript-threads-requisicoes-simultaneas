@@ -1,6 +1,4 @@
-const lista = document.getElementById("dolar") as HTMLUListElement;
-
-export function exibeCotacao(nomeSingular: string, nomePlural: string, valor: number) {
+export function exibeCotacao(lista: HTMLUListElement, nomeSingular: string, nomePlural: string, valor: number) {
   lista.textContent = "";
 
   for (let multiplicador = 1; multiplicador <= 1000; multiplicador *= 10) {
