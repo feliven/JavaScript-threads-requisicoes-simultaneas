@@ -1,28 +1,46 @@
 .dadosDolar,
 .dadosIene {
-  margin: 3em auto;
-  padding: 2em;
+  margin: 2rem;
+  padding: 2rem;
   display: flex;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(0.75rem, 2vw, 3rem);
+  justify-content: space-around;
   background-color: white;
   border-radius: 24px;
-  width: 65%;
   color: var(--cinza);
 }
 
 .grafico {
-  width: 30vw;
+  flex: 1;
+  min-width: 0;
+}
+
+.grafico__canvas-wrapper {
+  position: relative;
+  height: 20rem;
+}
+
+.grafico canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .grafico__titulo {
   display: flex;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .grafico__titulo span {
+  display: inline-block; /* or block */
   background-repeat: no-repeat;
   width: 50px;
   height: 40px;
+  flex-shrink: 0;
 }
 
 .grafico__ilustracao-dolar {
@@ -37,13 +55,15 @@
   color: var(--cinza);
   font-weight: 700;
   font-size: 24px;
+  margin: 0 1rem;
 }
 
 .investimentos__lista {
-  margin: 2em;
+  margin: 1rem;
+  margin-right: 0;
   color: var(--cinza);
 }
 
 .investimentos__lista li {
-  margin: 1em 0;
+  margin: 1rem 0;
 }

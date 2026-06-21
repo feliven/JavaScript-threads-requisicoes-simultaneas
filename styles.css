@@ -22,6 +22,6 @@
 .container {
   display: grid;
   height: 100vh;
-  grid-template-columns: 20% auto;
+  grid-template-columns: 20% 1fr;
   background-color: var(--lilas);
 }

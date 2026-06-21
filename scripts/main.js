@@ -68,6 +68,10 @@ const graficoDolar = new Chart(elemGraficoDolar, {
             },
         ],
     },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+    },
 });
 // @ts-ignore
 const graficoIene = new Chart(elemGraficoIene, {
@@ -86,6 +90,10 @@ const graficoIene = new Chart(elemGraficoIene, {
                 borderWidth: 1,
             },
         ],
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
     },
 });
 function horarioFormatado() {
